@@ -8,6 +8,7 @@ import LanguageSwitcher from './components/LanguageSwitcher';
 import Flashcards from './components/Flashcards';
 import GrammarNotes from './components/GrammarNotes';
 import ConversationPractice from './components/ConversationPractice';
+import ListeningDrill from './components/ListeningDrill';
 
 type Mode = LearningStyle;
 
@@ -111,9 +112,9 @@ export default function App() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <div className="brand">
-            <span className="flag">🌿</span> Lingua
+            Lingua
           </div>
-          <div className="subtitle">A cozy corner for learning languages, one deck at a time.</div>
+          <div className="subtitle">Learn languages, one day at a time.</div>
         </div>
         <UserButton afterSignOutUrl="/" />
       </div>
@@ -134,6 +135,11 @@ export default function App() {
                 Flashcards
               </button>
             )}
+            {settings.learning_styles.includes('listening') && (
+              <button className={`nav-tab ${mode === 'listening' ? 'active' : ''}`} onClick={() => setMode('listening')}>
+                Listening
+              </button>
+            )}
             {settings.learning_styles.includes('grammar') && (
               <button className={`nav-tab ${mode === 'grammar' ? 'active' : ''}`} onClick={() => setMode('grammar')}>
                 Grammar
@@ -148,6 +154,9 @@ export default function App() {
 
           {activeLanguage && mode === 'flashcards' && (
             <Flashcards languageId={activeLanguage.id} userId={userId} unlockedDay={unlockedDay} />
+          )}
+          {activeLanguage && mode === 'listening' && (
+            <ListeningDrill languageId={activeLanguage.id} userId={userId} unlockedDay={unlockedDay} />
           )}
           {activeLanguage && mode === 'grammar' && (
             <GrammarNotes languageId={activeLanguage.id} unlockedDay={unlockedDay} />
