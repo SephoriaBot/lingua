@@ -56,7 +56,6 @@ export interface CardProgress {
 export interface UserSettings {
   user_id: string;
   active_language_id: string;
-  learning_styles: LearningStyle[];
   started_at: string;
   updated_at: string;
 }
