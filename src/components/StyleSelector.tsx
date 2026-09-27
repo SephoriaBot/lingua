@@ -3,6 +3,7 @@ import type { LearningStyle } from '../types';
 
 const OPTIONS: { key: LearningStyle; label: string; blurb: string }[] = [
   { key: 'flashcards', label: 'Flashcards', blurb: 'Quick recall drills with spaced repetition.' },
+  { key: 'listening', label: 'Listening', blurb: 'Hear a word or phrase and type what you heard.' },
   { key: 'grammar', label: 'Grammar notes', blurb: 'Short explanations with worked examples.' },
   { key: 'conversation', label: 'Conversation', blurb: 'Chat with an AI partner in scenarios.' },
 ];
