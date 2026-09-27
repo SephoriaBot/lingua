@@ -90,9 +90,16 @@ export default function Flashcards({
       {card ? (
         <>
           <div className="flashcard" onClick={() => setRevealed((r) => !r)}>
-            <div className="front" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              {revealed ? card.back : card.front}
-              <SpeakButton text={card.front} languageId={languageId} />
+            <div className="front" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                {revealed ? card.back : card.front}
+                <SpeakButton text={card.front} languageId={languageId} />
+              </div>
+              {/* Pinyin stays visible whether or not the card is revealed —
+                  it's what makes the character readable in the first place. */}
+              {card.pinyin && (
+                <div style={{ fontSize: '0.9rem', opacity: 0.65 }}>{card.pinyin}</div>
+              )}
             </div>
             {revealed && card.example_sentence && (
               <div className="example">
