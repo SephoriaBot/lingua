@@ -81,9 +81,7 @@ export default function App() {
   if (!userId) {
     return (
       <div className="app-shell">
-        <div className="brand">
-          <span className="flag">🌿</span> Lingua
-        </div>
+        <img src="/linguatitle.png" alt="Lingua" className="brand-logo" />
         <p style={{ marginBottom: 16 }}>Sign in to start learning.</p>
         <SignInButton mode="modal">
           <button className="btn-primary">Sign in</button>
@@ -101,10 +99,8 @@ export default function App() {
     <div className="app-shell">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <div className="brand">
-            <span className="flag">🌿</span> Lingua
-          </div>
-          <div className="subtitle">Learn languages, one day at a time.</div>
+          <img src="/linguatitle.png" alt="Lingua" className="brand-logo" />
+          <div className="subtitle">A cozy corner for learning languages, one deck at a time.</div>
         </div>
         <UserButton afterSignOutUrl="/" />
       </div>
@@ -117,15 +113,19 @@ export default function App() {
 
       <div className="nav-row">
         <button className={`nav-tab ${mode === 'flashcards' ? 'active' : ''}`} onClick={() => setMode('flashcards')}>
+          <img src="/flashcards.png" alt="" className="nav-tab-icon" />
           Flashcards
         </button>
         <button className={`nav-tab ${mode === 'listening' ? 'active' : ''}`} onClick={() => setMode('listening')}>
+          <img src="/listening.png" alt="" className="nav-tab-icon" />
           Listening
         </button>
         <button className={`nav-tab ${mode === 'grammar' ? 'active' : ''}`} onClick={() => setMode('grammar')}>
+          <img src="/grammar.png" alt="" className="nav-tab-icon" />
           Grammar
         </button>
         <button className={`nav-tab ${mode === 'conversation' ? 'active' : ''}`} onClick={() => setMode('conversation')}>
+          <img src="/conversations.png" alt="" className="nav-tab-icon" />
           Conversation
         </button>
       </div>
