@@ -240,3 +240,15 @@ body {
 }
 
 .grammar-example .eng { opacity: 0.6; font-weight: 300; margin-top: 2px; }
+
+.brand-logo {
+  height: 36px;
+  width: auto;
+}
+
+.nav-tab-icon {
+  height: 18px;
+  width: auto;
+  margin-right: 6px;
+  vertical-align: middle;
+}
