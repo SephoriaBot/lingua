@@ -1,4 +1,4 @@
-export type LearningStyle = 'flashcards' | 'grammar' | 'conversation';
+export type LearningStyle = 'flashcards' | 'listening' | 'grammar' | 'conversation';
 
 export interface Language {
   id: string;
