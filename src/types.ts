@@ -23,6 +23,7 @@ export interface Card {
   back: string;
   example_sentence: string;
   example_translation: string;
+  pinyin?: string;
 }
 
 export interface GrammarNote {
