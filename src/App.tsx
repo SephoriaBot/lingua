@@ -127,7 +127,7 @@ export default function App() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <img src="/linguatitle.png" alt="Lingua" className="brand-logo" />
-          <div className="subtitle">A cozy corner for learning languages, one deck at a time.</div>
+          <div className="subtitle">Learn languages, one lesson at a time.</div>
         </div>
         <UserButton afterSignOutUrl="/" />
       </div>
