@@ -49,7 +49,9 @@ export default function ConversationPractice({
           Authorization: `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
         },
         body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
+          // Groq retired llama-3.3-70b-versatile on 2026-08-16. Override with VITE_GROQ_MODEL if it changes again.
+          model: import.meta.env.VITE_GROQ_MODEL || 'openai/gpt-oss-120b',
+          reasoning_effort: 'low', // gpt-oss accepts low | medium | high; low keeps chat replies snappy
           messages: [
             {
               role: 'system',
