@@ -3,16 +3,41 @@ import { turso } from '../lib/db/turso';
 import SpeakButton from './SpeakButton';
 import type { Deck, Card } from '../types';
 
-// Strips tone marks/apostrophes and normalizes case+spacing so a typed
-// answer like "ni hao" matches a stored pinyin value of "nǐ hǎo".
+// Builds a forgiving comparison key: ignores case, accents/tone marks,
+// punctuation (¿ ? ¡ ! . , 、 。 etc.) and spacing, so "Ni hao" matches "nǐ hǎo!".
 function normalize(str: string): string {
   return str
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // combining tone marks
+    .replace(/[\u0300-\u036f]/g, '') // combining accents / tone marks
     .replace(/['’]/g, '')
+    .replace(/[\p{P}\p{S}]/gu, ' ') // punctuation and symbols
     .toLowerCase()
-    .replace(/\s+/g, ' ')
+    .replace(/\s+/g, '')
     .trim();
+}
+
+function editDistance(a: string, b: string): number {
+  const prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    let diag = prev[0];
+    prev[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const tmp = prev[j];
+      prev[j] = Math.min(prev[j] + 1, prev[j - 1] + 1, diag + (a[i - 1] === b[j - 1] ? 0 : 1));
+      diag = tmp;
+    }
+  }
+  return prev[b.length];
+}
+
+// Allow a small typo or two on longer phrases; short words must match exactly.
+function isCloseEnough(input: string, target: string): boolean {
+  const a = normalize(input);
+  const b = normalize(target);
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const tolerance = b.length < 5 ? 0 : b.length < 12 ? 1 : b.length < 24 ? 2 : 3;
+  return editDistance(a, b) <= tolerance;
 }
 
 export default function ListeningDrill({
@@ -72,8 +97,9 @@ export default function ListeningDrill({
   function checkAnswer() {
     const card = cards[index];
     if (!card) return;
-    const target = card.pinyin || card.front; // fall back to front for languages without a pinyin field
-    const isCorrect = normalize(input) === normalize(target);
+    // Accept the reading (pinyin/romanization) OR the written form.
+    const targets = [card.pinyin, card.front].filter(Boolean) as string[];
+    const isCorrect = targets.some((t) => isCloseEnough(input, t));
     setResult(isCorrect ? 'correct' : 'incorrect');
     logProgress(card, isCorrect);
   }
@@ -114,7 +140,7 @@ export default function ListeningDrill({
       {card ? (
         <>
           <div className="flashcard" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-            <div style={{ fontSize: '0.85rem', opacity: 0.6 }}>Listen, then type what you hear (pinyin is fine)</div>
+            <div style={{ fontSize: '0.85rem', opacity: 0.6 }}>Listen, then type what you hear (romanization is fine; capitalization and punctuation don't matter)</div>
             <SpeakButton text={card.front} languageId={languageId} />
 
             {result === null ? (
