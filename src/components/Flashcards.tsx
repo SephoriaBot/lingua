@@ -5,11 +5,9 @@ import type { Deck, Card } from '../types';
 
 export default function Flashcards({
   languageId,
-  userId,
   unlockedDay,
 }: {
   languageId: string;
-  userId: string;
   unlockedDay: number;
 }) {
   const [decks, setDecks] = useState<Deck[]>([]);
@@ -39,25 +37,9 @@ export default function Flashcards({
     setRevealed(false);
   }
 
-  async function grade(quality: 'again' | 'good' | 'easy') {
-    const card = cards[index];
-    if (card) {
-      // Minimal SM-2-style update — tune as you learn what feels right.
-      const bump = quality === 'again' ? 0 : quality === 'good' ? 1 : 2.5;
-      const nextInterval = quality === 'again' ? 0 : Math.max(1, bump * 2);
-      const dueAt = new Date(Date.now() + nextInterval * 86400000).toISOString();
-      await turso.execute({
-        sql: `insert into card_progress (user_id, card_id, interval_days, due_at, last_reviewed_at)
-              values (?, ?, ?, ?, ?)
-              on conflict(user_id, card_id) do update set
-                interval_days = excluded.interval_days,
-                due_at = excluded.due_at,
-                last_reviewed_at = excluded.last_reviewed_at`,
-        args: [userId, card.id, nextInterval, dueAt, new Date().toISOString()],
-      });
-    }
+  function go(delta: number) {
     setRevealed(false);
-    setIndex((i) => (i + 1 < cards.length ? i + 1 : 0));
+    setIndex((i) => (i + delta + cards.length) % cards.length);
   }
 
   if (!activeDeck) {
@@ -113,13 +95,10 @@ export default function Flashcards({
             )}
             {!revealed && <div style={{ fontSize: '0.85rem', opacity: 0.5 }}>Tap to reveal</div>}
           </div>
-          {revealed && (
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 16 }}>
-              <button className="btn-secondary" onClick={() => grade('again')}>Again</button>
-              <button className="btn-secondary" onClick={() => grade('good')}>Good</button>
-              <button className="btn-primary" onClick={() => grade('easy')}>Easy</button>
-            </div>
-          )}
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 16 }}>
+            <button className="btn-secondary" onClick={() => go(-1)} aria-label="Previous card">‹</button>
+            <button className="btn-secondary" onClick={() => go(1)} aria-label="Next card">›</button>
+          </div>
           <p style={{ textAlign: 'center', opacity: 0.5, fontSize: '0.85rem', marginTop: 14 }}>
             Card {index + 1} of {cards.length}
           </p>
