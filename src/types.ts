@@ -24,6 +24,7 @@ export interface Card {
   example_sentence: string;
   example_translation: string;
   pinyin?: string;
+  romaji?: string;
 }
 
 export interface GrammarNote {
