@@ -1,25 +1,39 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@400;500;600&display=swap');
 
 :root {
-  --cream: #FAF6FB;
-  --lilac: #E4D9F0;
-  --lilac-soft: #EFE6F7;
-  --mauve: #8E749F;
-  --mauve-dark: #6B5578;
-  --blush: #F1D8DE;
-  --blush-dark: #D9A9B4;
-  --ink: #5B4E68;
-  --gold: #C9A45C;
+  /* ---------- Lingua Storybook Palette ---------- */
+
+  --cream: #FFF8E8;
+  --lavender: #A995D1;
+  --lavender-soft: #EEE7F7;
+  --lavender-pale: #F5F0FA;
+
+  --butter: #F5D889;
+  --butter-soft: #FBEDBD;
+
+  --sage: #B7C5A5;
+  --sage-soft: #E7ECDD;
+
+  --blush: #E6B7C5;
+  --blush-soft: #F5E3E8;
+
+  --mauve: #8E789F;
+  --mauve-dark: #655474;
+
+  --ink: #51485C;
 
   --font-display: 'Cormorant Garamond', Georgia, serif;
   --font-body: 'Jost', system-ui, sans-serif;
 
   --radius: 18px;
   --radius-sm: 10px;
-  --shadow: 0 4px 18px rgba(142, 116, 159, 0.14);
+
+  --shadow: 0 4px 18px rgba(101, 84, 116, 0.11);
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
@@ -35,6 +49,8 @@ body {
   padding: 28px 20px 64px;
 }
 
+/* ---------- Brand ---------- */
+
 .brand {
   font-family: var(--font-display);
   font-size: 2.1rem;
@@ -47,7 +63,9 @@ body {
   margin-bottom: 4px;
 }
 
-.brand .flag { font-size: 1.3rem; }
+.brand .flag {
+  font-size: 1.3rem;
+}
 
 .subtitle {
   color: var(--ink);
@@ -57,13 +75,17 @@ body {
   margin-bottom: 28px;
 }
 
+/* ---------- Cards ---------- */
+
 .card-surface {
-  background: #fff;
-  border: 1px solid var(--lilac);
+  background: #FFFDF8;
+  border: 1px solid var(--lavender);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 22px;
 }
+
+/* ---------- Pills ---------- */
 
 .pill-row {
   display: flex;
@@ -73,8 +95,8 @@ body {
 }
 
 .pill {
-  border: 1.5px solid var(--lilac);
-  background: var(--lilac-soft);
+  border: 1.5px solid var(--lavender);
+  background: var(--lavender-soft);
   color: var(--mauve-dark);
   border-radius: 999px;
   padding: 8px 16px;
@@ -82,19 +104,25 @@ body {
   font-weight: 500;
   font-size: 0.88rem;
   cursor: pointer;
-  transition: transform 0.12s ease, background 0.15s ease;
+  transition:
+    transform 0.12s ease,
+    background 0.15s ease;
 }
 
-.pill:hover { transform: translateY(-1px); }
+.pill:hover {
+  transform: translateY(-1px);
+}
 
 .pill.active {
-  background: var(--mauve);
-  border-color: var(--mauve);
+  background: var(--lavender);
+  border-color: var(--lavender);
   color: #fff;
 }
 
+/* ---------- Buttons ---------- */
+
 .btn-primary {
-  background: var(--mauve);
+  background: var(--lavender);
   color: #fff;
   border: none;
   border-radius: var(--radius-sm);
@@ -103,16 +131,21 @@ body {
   font-weight: 500;
   font-size: 0.95rem;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition:
+    background 0.15s ease,
+    transform 0.12s ease;
   letter-spacing: 0.2px;
 }
 
-.btn-primary:hover { background: var(--mauve-dark); }
+.btn-primary:hover {
+  background: var(--mauve);
+  transform: translateY(-1px);
+}
 
 .btn-secondary {
   background: transparent;
   color: var(--mauve-dark);
-  border: 1.5px solid var(--mauve);
+  border: 1.5px solid var(--lavender);
   border-radius: var(--radius-sm);
   padding: 10px 18px;
   font-family: var(--font-body);
@@ -121,11 +154,13 @@ body {
   cursor: pointer;
 }
 
+/* ---------- Navigation ---------- */
+
 .nav-row {
   display: flex;
   gap: 8px;
   margin-bottom: 24px;
-  border-bottom: 1.5px solid var(--lilac);
+  border-bottom: 1.5px solid var(--lavender);
   padding-bottom: 0;
 }
 
@@ -145,8 +180,10 @@ body {
 .nav-tab.active {
   opacity: 1;
   color: var(--mauve-dark);
-  border-bottom-color: var(--gold);
+  border-bottom-color: var(--butter);
 }
+
+/* ---------- Flashcards ---------- */
 
 .flashcard {
   min-height: 220px;
@@ -173,18 +210,33 @@ body {
   max-width: 420px;
 }
 
+/* ---------- Deck List ---------- */
+
 .deck-list-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 14px 4px;
-  border-bottom: 1px solid var(--lilac);
+  border-bottom: 1px solid var(--lavender);
 }
 
-.deck-list-item:last-child { border-bottom: none; }
+.deck-list-item:last-child {
+  border-bottom: none;
+}
 
-.deck-title { font-weight: 600; color: var(--mauve-dark); }
-.deck-desc { font-size: 0.85rem; font-weight: 300; opacity: 0.6; margin-top: 2px; }
+.deck-title {
+  font-weight: 600;
+  color: var(--mauve-dark);
+}
+
+.deck-desc {
+  font-size: 0.85rem;
+  font-weight: 300;
+  opacity: 0.6;
+  margin-top: 2px;
+}
+
+/* ---------- Chat ---------- */
 
 .chat-bubble {
   border-radius: 16px;
@@ -196,13 +248,13 @@ body {
 }
 
 .chat-bubble.them {
-  background: var(--lilac-soft);
+  background: var(--lavender-soft);
   color: var(--mauve-dark);
   align-self: flex-start;
 }
 
 .chat-bubble.me {
-  background: var(--blush);
+  background: var(--blush-soft);
   color: var(--ink);
   align-self: flex-end;
 }
@@ -215,12 +267,16 @@ body {
 
 .chat-input-row input {
   flex: 1;
-  border: 1.5px solid var(--lilac);
+  border: 1.5px solid var(--lavender);
   border-radius: var(--radius-sm);
   padding: 10px 14px;
   font-family: var(--font-body);
   font-size: 0.95rem;
+  background: #FFFDF8;
+  color: var(--ink);
 }
+
+/* ---------- Grammar ---------- */
 
 .grammar-note h3 {
   font-family: var(--font-display);
@@ -232,14 +288,20 @@ body {
 }
 
 .grammar-example {
-  background: var(--lilac-soft);
+  background: var(--lavender-soft);
   border-radius: var(--radius-sm);
   padding: 10px 14px;
   margin-top: 8px;
   font-size: 0.9rem;
 }
 
-.grammar-example .eng { opacity: 0.6; font-weight: 300; margin-top: 2px; }
+.grammar-example .eng {
+  opacity: 0.6;
+  font-weight: 300;
+  margin-top: 2px;
+}
+
+/* ---------- Logo / Icons ---------- */
 
 .brand-logo {
   height: 80px;
