@@ -79,8 +79,8 @@ export default function Flashcards({
               </div>
               {/* Pinyin stays visible whether or not the card is revealed —
                   it's what makes the character readable in the first place. */}
-              {card.pinyin && (
-                <div style={{ fontSize: '0.9rem', opacity: 0.65 }}>{card.pinyin}</div>
+              {(card.romaji || card.pinyin) && (
+                <div style={{ fontSize: '0.9rem', opacity: 0.65 }}>{card.romaji || card.pinyin}</div>
               )}
             </div>
             {revealed && card.example_sentence && (
