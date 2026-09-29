@@ -98,7 +98,7 @@ export default function ListeningDrill({
     const card = cards[index];
     if (!card) return;
     // Accept the reading (pinyin/romanization) OR the written form.
-    const targets = [card.pinyin, card.front].filter(Boolean) as string[];
+    const targets = [card.romaji, card.pinyin, card.front].filter(Boolean) as string[];
     const isCorrect = targets.some((t) => isCloseEnough(input, t));
     setResult(isCorrect ? 'correct' : 'incorrect');
     logProgress(card, isCorrect);
@@ -177,7 +177,9 @@ export default function ListeningDrill({
                   {card.front}
                   <SpeakButton text={card.front} languageId={languageId} />
                 </div>
-                {card.pinyin && <div style={{ fontSize: '0.9rem', opacity: 0.65 }}>{card.pinyin}</div>}
+                {(card.romaji || card.pinyin) && (
+                  <div style={{ fontSize: '0.9rem', opacity: 0.65 }}>{card.romaji || card.pinyin}</div>
+                )}
                 <div style={{ opacity: 0.8 }}>{card.back}</div>
                 {result === 'incorrect' && (
                   <div style={{ fontSize: '0.85rem', opacity: 0.6 }}>You typed: "{input}"</div>
