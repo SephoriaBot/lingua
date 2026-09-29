@@ -4,6 +4,7 @@ const LANGUAGE_TO_BCP47: Record<string, string> = {
   es: 'es-ES',
   zh: 'zh-CN',
   fr: 'fr-FR',
+  ja: 'ja-JP',
 };
 
 export function speak(text: string, languageId: string) {
