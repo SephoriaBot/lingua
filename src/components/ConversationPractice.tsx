@@ -51,14 +51,29 @@ export default function ConversationPractice({
         body: JSON.stringify({
           model: 'llama-3.3-70b-versatile',
           messages: [
-            { role: 'system', content: active.system_prompt },
+            {
+              role: 'system',
+              content:
+                active.system_prompt +
+                '\n\nThe learner is a beginner who may not be able to type in the target script. ' +
+                'Format every reply as three short lines: (1) the target-language sentence, ' +
+                '(2) its romanization/pronunciation if the script is not Latin (e.g. romaji, pinyin), ' +
+                '(3) an English translation in parentheses. Keep replies to one or two sentences. ' +
+                'The learner may answer in romanization or English; always understand it, ' +
+                'gently model the correct target-language phrasing, and keep the conversation going. ' +
+                'Never reply with only an ellipsis.',
+            },
             ...nextMessages.map((m) => ({ role: m.role, content: m.content })),
           ],
         }),
       });
       const data = await res.json();
-      const reply = data.choices?.[0]?.message?.content ?? '...';
+      const reply =
+        data.choices?.[0]?.message?.content?.trim() ||
+        `⚠️ No reply from the tutor${data.error?.message ? `: ${data.error.message}` : ` (HTTP ${res.status})`}`;
       setMessages((m) => [...m, { role: 'assistant', content: reply }]);
+    } catch (err) {
+      setMessages((m) => [...m, { role: 'assistant', content: `⚠️ Couldn't reach the tutor: ${String(err)}` }]);
     } finally {
       setSending(false);
     }
@@ -89,7 +104,7 @@ export default function ConversationPractice({
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {messages.map((m, i) => (
           <div key={i} className={`chat-bubble ${m.role === 'assistant' ? 'them' : 'me'}`} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            {m.content}
+            <span style={{ whiteSpace: 'pre-line' }}>{m.content}</span>
             {m.role === 'assistant' && <SpeakButton text={m.content} languageId={languageId} />}
           </div>
         ))}
@@ -100,7 +115,7 @@ export default function ConversationPractice({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && send()}
-          placeholder="Type your reply…"
+          placeholder="Type your reply (romaji or English is fine)…"
         />
         <button className="btn-primary" onClick={send} disabled={sending}>
           Send
