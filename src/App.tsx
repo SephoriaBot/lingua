@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useUser, SignInButton, UserButton } from '@clerk/clerk-react';
 import { turso } from './lib/db/turso';
-import { getUnlockedDay } from './lib/progress';
+import { ensureLessonTable, getLessonState, completeLesson, type LessonState } from './lib/progress';
 import type { Language, UserSettings } from './types';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import Flashcards from './components/Flashcards';
@@ -19,6 +19,7 @@ export default function App() {
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<Mode>('flashcards');
+  const [lesson, setLesson] = useState<LessonState | null>(null);
 
   useEffect(() => {
     if (!userId) return;
@@ -64,6 +65,32 @@ export default function App() {
     })();
   }, [userId]);
 
+  // Lesson gate: recompute whenever the language changes, and again when the
+  // tab regains focus so a page left open past midnight picks up the new day.
+  const activeLanguageId = settings?.active_language_id;
+  useEffect(() => {
+    if (!userId || !activeLanguageId) return;
+    let cancelled = false;
+    const refresh = async () => {
+      await ensureLessonTable();
+      const state = await getLessonState(userId, activeLanguageId);
+      if (!cancelled) setLesson(state);
+    };
+    refresh();
+    const onVisible = () => document.visibilityState === 'visible' && refresh();
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [userId, activeLanguageId]);
+
+  async function finishLesson() {
+    if (!userId || !activeLanguageId || lesson?.status !== 'open') return;
+    await completeLesson(userId, activeLanguageId, lesson.day);
+    setLesson(await getLessonState(userId, activeLanguageId));
+  }
+
   async function setActiveLanguage(id: string) {
     if (!settings || !userId) return;
     await turso.execute({
@@ -90,10 +117,10 @@ export default function App() {
     );
   }
 
-  if (loading || !settings) return null;
+  if (loading || !settings || !lesson) return null;
 
   const activeLanguage = languages.find((l) => l.id === settings.active_language_id) ?? languages[0];
-  const unlockedDay = getUnlockedDay(settings.started_at);
+  const unlockedDay = lesson.unlockedDay;
 
   return (
     <div className="app-shell">
@@ -110,6 +137,20 @@ export default function App() {
         activeId={activeLanguage?.id ?? ''}
         onChange={setActiveLanguage}
       />
+
+
+      <div className="card-surface" style={{ marginBottom: 16, textAlign: 'center' }}>
+        {lesson.status === 'open' ? (
+          <>
+            <div style={{ marginBottom: 10 }}>Day {lesson.day} lesson</div>
+            <button className="btn-primary" onClick={finishLesson}>
+              Finish today's lesson
+            </button>
+          </>
+        ) : (
+          <div>Day {lesson.day} complete 🌙 Your next lesson unlocks tomorrow.</div>
+        )}
+      </div>
 
       <div className="nav-row">
         <button className={`nav-tab ${mode === 'flashcards' ? 'active' : ''}`} onClick={() => setMode('flashcards')}>
