@@ -172,7 +172,7 @@ export default function App() {
       </div>
 
       {activeLanguage && mode === 'flashcards' && (
-        <Flashcards languageId={activeLanguage.id} userId={userId} unlockedDay={unlockedDay} />
+        <Flashcards languageId={activeLanguage.id} unlockedDay={unlockedDay} />
       )}
       {activeLanguage && mode === 'listening' && (
         <ListeningDrill languageId={activeLanguage.id} userId={userId} unlockedDay={unlockedDay} />
