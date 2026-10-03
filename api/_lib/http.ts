@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { HttpError } from './core';
+import { HttpError } from './core.js';
 
 export function guard(req: VercelRequest, res: VercelResponse): boolean {
   res.setHeader('Cache-Control', 'no-store');

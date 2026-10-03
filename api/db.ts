@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { requireUser } from './_lib/auth';
-import { getDb } from './_lib/db';
-import { localDate, runAction } from './_lib/core';
-import { bodyOf, guard, sendError } from './_lib/http';
+import { requireUser } from './_lib/auth.js';
+import { getDb } from './_lib/db.js';
+import { localDate, runAction } from './_lib/core.js';
+import { bodyOf, guard, sendError } from './_lib/http.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!guard(req, res)) return;

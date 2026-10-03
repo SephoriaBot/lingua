@@ -1,6 +1,6 @@
 import { verifyToken } from '@clerk/backend';
 import type { VercelRequest } from '@vercel/node';
-import { HttpError } from './core';
+import { HttpError } from './core.js';
 
 // Returns the Clerk user id from a *verified* session token.
 // The user id is never read from the request body.
