@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useUser, SignInButton, UserButton } from '@clerk/clerk-react';
-import { turso } from './lib/db/turso';
-import { ensureLessonTable, getLessonState, completeLesson, type LessonState } from './lib/progress';
-import type { Language, UserSettings } from './types';
+import { useUser, useAuth, SignInButton, UserButton } from '@clerk/clerk-react';
+import { dbCall, setTokenGetter } from './lib/api';
+import type { Language, UserSettings, LessonState } from './types';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import Flashcards from './components/Flashcards';
 import GrammarNotes from './components/GrammarNotes';
@@ -13,56 +12,35 @@ type Mode = 'flashcards' | 'listening' | 'grammar' | 'conversation';
 
 export default function App() {
   const { user, isLoaded } = useUser();
+  const { getToken } = useAuth();
   const userId = user?.id;
+  // Registered during render so child effects can authenticate on first mount.
+  setTokenGetter(() => getToken());
 
   const [languages, setLanguages] = useState<Language[]>([]);
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>('flashcards');
   const [lesson, setLesson] = useState<LessonState | null>(null);
 
   useEffect(() => {
     if (!userId) return;
-    (async () => {
-      const langsRes = await turso.execute('select * from languages order by sort_order');
-      const langs = langsRes.rows as unknown as Language[];
-      setLanguages(langs);
-
-      const settingsRes = await turso.execute({
-        sql: 'select * from user_settings where user_id = ?',
-        args: [userId],
+    let cancelled = false;
+    dbCall<{ languages: Language[]; settings: UserSettings; lesson: LessonState }>('bootstrap')
+      .then((r) => {
+        if (cancelled) return;
+        setLanguages(r.languages);
+        setSettings(r.settings);
+        setLesson(r.lesson);
+        setLoading(false);
+      })
+      .catch((e) => {
+        if (!cancelled) setLoadError(e instanceof Error ? e.message : 'Could not load your data');
       });
-      const row = settingsRes.rows[0] as any;
-
-      if (row) {
-        let startedAt = row.started_at as string | null;
-        if (!startedAt) {
-          startedAt = new Date().toISOString();
-          await turso.execute({
-            sql: 'update user_settings set started_at = ? where user_id = ?',
-            args: [startedAt, userId],
-          });
-        }
-        setSettings({ ...row, started_at: startedAt });
-      } else {
-        // First time we've seen this user — create their settings row up
-        // front instead of waiting on a style-selection step.
-        const activeLanguage = langs[0]?.id ?? 'es';
-        const startedAt = new Date().toISOString();
-        await turso.execute({
-          sql: `insert into user_settings (user_id, active_language_id, started_at, updated_at)
-                values (?, ?, ?, ?)`,
-          args: [userId, activeLanguage, startedAt, startedAt],
-        });
-        setSettings({
-          user_id: userId,
-          active_language_id: activeLanguage,
-          started_at: startedAt,
-          updated_at: startedAt,
-        });
-      }
-      setLoading(false);
-    })();
+    return () => {
+      cancelled = true;
+    };
   }, [userId]);
 
   // Lesson gate: recompute whenever the language changes, and again when the
@@ -72,9 +50,12 @@ export default function App() {
     if (!userId || !activeLanguageId) return;
     let cancelled = false;
     const refresh = async () => {
-      await ensureLessonTable();
-      const state = await getLessonState(userId, activeLanguageId);
-      if (!cancelled) setLesson(state);
+      try {
+        const r = await dbCall<{ lesson: LessonState }>('lesson', { languageId: activeLanguageId });
+        if (!cancelled) setLesson(r.lesson);
+      } catch {
+        /* keep the last known state */
+      }
     };
     refresh();
     const onVisible = () => document.visibilityState === 'visible' && refresh();
@@ -87,17 +68,22 @@ export default function App() {
 
   async function finishLesson() {
     if (!userId || !activeLanguageId || lesson?.status !== 'open') return;
-    await completeLesson(userId, activeLanguageId, lesson.day);
-    setLesson(await getLessonState(userId, activeLanguageId));
+    try {
+      const r = await dbCall<{ lesson: LessonState }>('completeLesson', { languageId: activeLanguageId });
+      setLesson(r.lesson);
+    } catch {
+      /* leave the button available so they can try again */
+    }
   }
 
   async function setActiveLanguage(id: string) {
     if (!settings || !userId) return;
-    await turso.execute({
-      sql: 'update user_settings set active_language_id = ? where user_id = ?',
-      args: [id, userId],
-    });
-    setSettings({ ...settings, active_language_id: id });
+    try {
+      await dbCall('setLanguage', { languageId: id });
+      setSettings({ ...settings, active_language_id: id });
+    } catch {
+      /* ignore; the switcher stays on the current language */
+    }
   }
 
   // Wait for Clerk to finish checking the session before deciding what to show.
@@ -113,6 +99,17 @@ export default function App() {
         <SignInButton mode="modal">
           <button className="btn-primary">Sign in</button>
         </SignInButton>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="app-shell">
+        <p>Couldn't load your lessons: {loadError}</p>
+        <button className="btn-primary" onClick={() => window.location.reload()}>
+          Try again
+        </button>
       </div>
     );
   }
@@ -175,7 +172,7 @@ export default function App() {
         <Flashcards languageId={activeLanguage.id} unlockedDay={unlockedDay} />
       )}
       {activeLanguage && mode === 'listening' && (
-        <ListeningDrill languageId={activeLanguage.id} userId={userId} unlockedDay={unlockedDay} />
+        <ListeningDrill languageId={activeLanguage.id} unlockedDay={unlockedDay} />
       )}
       {activeLanguage && mode === 'grammar' && (
         <GrammarNotes languageId={activeLanguage.id} unlockedDay={unlockedDay} />

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { turso } from '../lib/db/turso';
+import { dbCall, chatCall } from '../lib/api';
 import SpeakButton from './SpeakButton';
 import type { ConversationPrompt } from '../types';
 
@@ -19,12 +19,9 @@ export default function ConversationPractice({
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
-    turso
-      .execute({
-        sql: 'select * from conversation_prompts where language_id = ? and sort_order <= ? order by sort_order',
-        args: [languageId, unlockedDay],
-      })
-      .then((res) => setScenarios(res.rows as unknown as ConversationPrompt[]));
+    dbCall<{ scenarios: ConversationPrompt[] }>('scenarios', { languageId })
+      .then((r) => setScenarios(r.scenarios))
+      .catch(() => setScenarios([]));
     setActive(null);
   }, [languageId, unlockedDay]);
 
@@ -40,42 +37,17 @@ export default function ConversationPractice({
     setInput('');
     setSending(true);
     try {
-      // Groq call — set VITE_GROQ_API_KEY, or better, proxy this through a
-      // server route so the key isn't exposed in the browser bundle.
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
-        },
-        body: JSON.stringify({
-          // Groq retired llama-3.3-70b-versatile on 2026-08-16. Override with VITE_GROQ_MODEL if it changes again.
-          model: import.meta.env.VITE_GROQ_MODEL || 'openai/gpt-oss-120b',
-          reasoning_effort: 'low', // gpt-oss accepts low | medium | high; low keeps chat replies snappy
-          messages: [
-            {
-              role: 'system',
-              content:
-                active.system_prompt +
-                '\n\nThe learner is a beginner who may not be able to type in the target script. ' +
-                'Format every reply as three short lines: (1) the target-language sentence, ' +
-                '(2) its romanization/pronunciation if the script is not Latin (e.g. romaji, pinyin), ' +
-                '(3) an English translation in parentheses. Keep replies to one or two sentences. ' +
-                'The learner may answer in romanization or English; always understand it, ' +
-                'gently model the correct target-language phrasing, and keep the conversation going. ' +
-                'Never reply with only an ellipsis.',
-            },
-            ...nextMessages.map((m) => ({ role: m.role, content: m.content })),
-          ],
-        }),
-      });
-      const data = await res.json();
-      const reply =
-        data.choices?.[0]?.message?.content?.trim() ||
-        `⚠️ No reply from the tutor${data.error?.message ? `: ${data.error.message}` : ` (HTTP ${res.status})`}`;
+      // The server builds the system prompt and talks to Groq; we only send the
+      // scenario id and what was said so far.
+      const { reply } = await chatCall(
+        active.id,
+        // Keep the request small: the server accepts at most 20 messages.
+        nextMessages.slice(-16).map((m) => ({ role: m.role, content: m.content }))
+      );
       setMessages((m) => [...m, { role: 'assistant', content: reply }]);
     } catch (err) {
-      setMessages((m) => [...m, { role: 'assistant', content: `⚠️ Couldn't reach the tutor: ${String(err)}` }]);
+      const msg = err instanceof Error ? err.message : 'Something went wrong';
+      setMessages((m) => [...m, { role: 'assistant', content: `⚠️ ${msg}` }]);
     } finally {
       setSending(false);
     }
@@ -116,6 +88,7 @@ export default function ConversationPractice({
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          maxLength={500}
           onKeyDown={(e) => e.key === 'Enter' && send()}
           placeholder="Type your reply (romaji or English is fine)…"
         />

@@ -41,7 +41,6 @@ export interface ConversationPrompt {
   language_id: string;
   scenario: string;
   opening_line: string;
-  system_prompt: string;
   sort_order: number;
 }
 
@@ -60,3 +59,7 @@ export interface UserSettings {
   started_at: string;
   updated_at: string;
 }
+
+export type LessonState =
+  | { status: 'open'; day: number; unlockedDay: number }       // today's lesson, not finished yet
+  | { status: 'done_today'; day: number; unlockedDay: number }; // finished; next one unlocks tomorrow

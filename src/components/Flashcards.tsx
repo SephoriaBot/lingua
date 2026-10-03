@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { turso } from '../lib/db/turso';
+import { dbCall } from '../lib/api';
 import SpeakButton from './SpeakButton';
 import type { Deck, Card } from '../types';
 
@@ -17,21 +17,15 @@ export default function Flashcards({
   const [revealed, setRevealed] = useState(false);
 
   useEffect(() => {
-    turso
-      .execute({
-        sql: 'select * from decks where language_id = ? and sort_order <= ? order by sort_order',
-        args: [languageId, unlockedDay],
-      })
-      .then((res) => setDecks(res.rows as unknown as Deck[]));
+    dbCall<{ decks: Deck[] }>('decks', { languageId })
+      .then((r) => setDecks(r.decks))
+      .catch(() => setDecks([]));
     setActiveDeck(null);
   }, [languageId, unlockedDay]);
 
   async function openDeck(deck: Deck) {
-    const res = await turso.execute({
-      sql: 'select * from cards where deck_id = ?',
-      args: [deck.id],
-    });
-    setCards(res.rows as unknown as Card[]);
+    const res = await dbCall<{ cards: Card[] }>('cards', { deckId: deck.id });
+    setCards(res.cards);
     setActiveDeck(deck);
     setIndex(0);
     setRevealed(false);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { turso } from '../lib/db/turso';
+import { dbCall } from '../lib/api';
 import SpeakButton from './SpeakButton';
 import type { Deck, Card } from '../types';
 
@@ -42,11 +42,9 @@ function isCloseEnough(input: string, target: string): boolean {
 
 export default function ListeningDrill({
   languageId,
-  userId,
   unlockedDay,
 }: {
   languageId: string;
-  userId: string;
   unlockedDay: number;
 }) {
   const [decks, setDecks] = useState<Deck[]>([]);
@@ -57,22 +55,16 @@ export default function ListeningDrill({
   const [result, setResult] = useState<'correct' | 'incorrect' | null>(null);
 
   useEffect(() => {
-    turso
-      .execute({
-        sql: 'select * from decks where language_id = ? and sort_order <= ? order by sort_order',
-        args: [languageId, unlockedDay],
-      })
-      .then((res) => setDecks(res.rows as unknown as Deck[]));
+    dbCall<{ decks: Deck[] }>('decks', { languageId })
+      .then((r) => setDecks(r.decks))
+      .catch(() => setDecks([]));
     setActiveDeck(null);
   }, [languageId, unlockedDay]);
 
   async function openDeck(deck: Deck) {
-    const res = await turso.execute({
-      sql: 'select * from cards where deck_id = ?',
-      args: [deck.id],
-    });
+    const res = await dbCall<{ cards: Card[] }>('cards', { deckId: deck.id });
     // Shuffle so dictation practice doesn't always run in the same order as flashcards.
-    const shuffled = [...(res.rows as unknown as Card[])].sort(() => Math.random() - 0.5);
+    const shuffled = [...res.cards].sort(() => Math.random() - 0.5);
     setCards(shuffled);
     setActiveDeck(deck);
     setIndex(0);
@@ -81,17 +73,12 @@ export default function ListeningDrill({
   }
 
   async function logProgress(card: Card, correct: boolean) {
-    const nextInterval = correct ? 2 : 0;
-    const dueAt = new Date(Date.now() + nextInterval * 86400000).toISOString();
-    await turso.execute({
-      sql: `insert into card_progress (user_id, card_id, interval_days, due_at, last_reviewed_at)
-            values (?, ?, ?, ?, ?)
-            on conflict(user_id, card_id) do update set
-              interval_days = excluded.interval_days,
-              due_at = excluded.due_at,
-              last_reviewed_at = excluded.last_reviewed_at`,
-      args: [userId, card.id, nextInterval, dueAt, new Date().toISOString()],
-    });
+    // The server works out the interval and the user; we only report the result.
+    try {
+      await dbCall('logProgress', { cardId: card.id, correct });
+    } catch {
+      /* progress logging is best-effort; don't interrupt the drill */
+    }
   }
 
   function checkAnswer() {

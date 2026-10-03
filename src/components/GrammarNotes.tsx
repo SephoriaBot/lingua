@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { turso } from '../lib/db/turso';
+import { dbCall } from '../lib/api';
 import SpeakButton from './SpeakButton';
 import type { GrammarNote } from '../types';
 
@@ -16,20 +16,21 @@ export default function GrammarNotes({
   const [notes, setNotes] = useState<GrammarNote[]>([]);
 
   useEffect(() => {
-    turso
-      .execute({
-        sql: 'select * from grammar_notes where language_id = ? and sort_order <= ? order by sort_order',
-        args: [languageId, unlockedDay],
-      })
-      .then((res) => {
-        const rows = res.rows as unknown as GrammarRow[];
+    dbCall<{ notes: GrammarRow[] }>('grammar', { languageId })
+      .then((r) =>
         setNotes(
-          rows.map((r) => ({
-            ...r,
-            examples: JSON.parse(r.examples || '[]'),
-          }))
-        );
-      });
+          r.notes.map((n) => {
+            let examples: GrammarNote['examples'] = [];
+            try {
+              examples = JSON.parse(n.examples || '[]');
+            } catch {
+              /* bad JSON in a row shouldn't break the page */
+            }
+            return { ...n, examples };
+          })
+        )
+      )
+      .catch(() => setNotes([]));
   }, [languageId, unlockedDay]);
 
   if (notes.length === 0) {
