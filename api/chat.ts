@@ -4,6 +4,30 @@ import { getDb } from './_lib/db.js';
 import { buildChat, consumeChatQuota, HttpError, localDate } from './_lib/core.js';
 import { bodyOf, guard, sendError } from './_lib/http.js';
 
+// A reply that is empty or only dots/ellipsis/punctuation isn't a real answer.
+const isBlank = (s: string) => s.replace(/[\s.…。·\-_*]/g, '').length === 0;
+
+async function askGroq(apiKey: string, messages: unknown[], effort: 'medium' | 'high') {
+  const groq = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    signal: AbortSignal.timeout(25_000),
+    body: JSON.stringify({
+      // Model is fixed on the server. Change it with the GROQ_MODEL env var.
+      model: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
+      reasoning_effort: effort,
+      max_completion_tokens: 1500, // reasoning tokens count too, so leave room
+      messages,
+    }),
+  });
+  const data: any = await groq.json().catch(() => ({}));
+  if (!groq.ok) {
+    console.error('Groq error', groq.status, data?.error?.message);
+    throw new HttpError(502, 'The tutor is unavailable right now. Please try again.');
+  }
+  return String(data?.choices?.[0]?.message?.content ?? '').trim();
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!guard(req, res)) return;
   try {
@@ -20,23 +44,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const messages = await buildChat(db, userId, today, bodyOf(req));
     await consumeChatQuota(db, userId);
 
-    const groq = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-      signal: AbortSignal.timeout(25_000),
-      body: JSON.stringify({
-        // Model is fixed on the server. Change it with the GROQ_MODEL env var.
-        model: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
-        reasoning_effort: 'low',
-        max_completion_tokens: 800,
-        messages,
-      }),
-    });
-    const data: any = await groq.json().catch(() => ({}));
-    const reply = data?.choices?.[0]?.message?.content?.trim();
-    if (!groq.ok || !reply) {
-      console.error('Groq error', groq.status, data?.error?.message);
-      throw new HttpError(502, 'The tutor is unavailable right now. Please try again.');
+    let reply = await askGroq(apiKey, messages, 'medium');
+    if (isBlank(reply)) reply = await askGroq(apiKey, messages, 'high'); // one retry
+    if (isBlank(reply)) {
+      throw new HttpError(502, 'The tutor didn\'t answer that one. Try rephrasing.');
     }
     res.status(200).json({ reply });
   } catch (e) {
