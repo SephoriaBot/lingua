@@ -10,6 +10,29 @@ import ListeningDrill from './components/ListeningDrill';
 
 type Mode = 'flashcards' | 'listening' | 'grammar' | 'conversation';
 
+function LoadingScreen() {
+  return (
+    <div className="app-shell" style={{ textAlign: 'center' }}>
+      <style>{`@keyframes lingua-spin { to { transform: rotate(360deg); } }`}</style>
+      <img src="/linguatitle.png" alt="Lingua" className="brand-logo" />
+      <div
+        role="status"
+        aria-label="Loading"
+        style={{
+          width: 32,
+          height: 32,
+          margin: '16px auto 8px',
+          border: '3px solid rgba(128,128,128,0.25)',
+          borderTopColor: 'currentColor',
+          borderRadius: '50%',
+          animation: 'lingua-spin 0.8s linear infinite',
+        }}
+      />
+      <p>Loading your lessons…</p>
+    </div>
+  );
+}
+
 export default function App() {
   const { user, isLoaded } = useUser();
   const { getToken } = useAuth();
@@ -87,7 +110,7 @@ export default function App() {
   }
 
   // Wait for Clerk to finish checking the session before deciding what to show.
-  if (!isLoaded) return null;
+  if (!isLoaded) return <LoadingScreen />;
 
   // Not signed in — Clerk's modal handles the actual form (email, password,
   // socials, whatever you've enabled in the Clerk dashboard).
@@ -114,7 +137,7 @@ export default function App() {
     );
   }
 
-  if (loading || !settings || !lesson) return null;
+  if (loading || !settings || !lesson) return <LoadingScreen />;
 
   const activeLanguage = languages.find((l) => l.id === settings.active_language_id) ?? languages[0];
   const unlockedDay = lesson.unlockedDay;
