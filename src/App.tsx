@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useUser, useAuth, SignInButton, UserButton } from '@clerk/clerk-react';
+import { useUser, useAuth, SignIn, UserButton } from '@clerk/clerk-react';
 import { dbCall, setTokenGetter } from './lib/api';
 import type { Language, UserSettings, LessonState } from './types';
 import LanguageSwitcher from './components/LanguageSwitcher';
@@ -96,9 +96,9 @@ export default function App() {
       <div className="app-shell">
         <img src="/linguatitle.png" alt="Lingua" className="brand-logo" />
         <p style={{ marginBottom: 16 }}>Sign in to start learning.</p>
-        <SignInButton mode="modal">
-          <button className="btn-primary">Sign in</button>
-        </SignInButton>
+        {/* Hash routing keeps the sign-up step in the URL, so if the phone reloads
+            the page while you're in your email app, you land back on the code step. */}
+        <SignIn routing="hash" />
       </div>
     );
   }
