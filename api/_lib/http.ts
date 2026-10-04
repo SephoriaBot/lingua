@@ -20,7 +20,9 @@ export function sendError(res: VercelResponse, e: unknown) {
   if (e instanceof HttpError) {
     res.status(e.status).json({ error: e.message });
   } else {
-    console.error(e); // details stay in server logs, not in the response
-    res.status(500).json({ error: 'Something went wrong' });
+    console.error(e);
+    // TEMPORARY DEBUG: remove after fixing
+    const msg = e instanceof Error ? e.message : String(e);
+    res.status(500).json({ error: 'DEBUG: ' + msg.slice(0, 200) });
   }
 }
