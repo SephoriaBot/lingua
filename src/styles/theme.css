@@ -1,26 +1,28 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@400;500;600&display=swap');
 
 :root {
-  /* ---------- Lingua Storybook Palette ---------- */
+  /* ---------- Lingua Editorial Palette ---------- */
 
-  --cream: #FFF8E8;
-  --lavender: #A995D1;
-  --lavender-soft: #EEE7F7;
-  --lavender-pale: #F5F0FA;
+  --cream: #F7F2F0;
+  --surface: #FDFBFA;
+  --surface-soft: #F1E8E8;
 
-  --butter: #F5D889;
-  --butter-soft: #FBEDBD;
+  --rose: #B77D91;
+  --rose-soft: #EEDDE3;
+  --rose-pale: #F7EFF2;
 
-  --sage: #B7C5A5;
-  --sage-soft: #E7ECDD;
+  --mauve: #9A7585;
+  --mauve-dark: #634C59;
 
-  --blush: #E6B7C5;
-  --blush-soft: #F5E3E8;
+  --sage: #AEB9A8;
+  --sage-soft: #E4E9E0;
 
-  --mauve: #8E789F;
-  --mauve-dark: #655474;
+  --gold: #C9A86A;
+  --gold-soft: #F0E6D2;
 
-  --ink: #51485C;
+  --ink: #4B4146;
+  --muted: #887B81;
+  --line: #DDD2D5;
 
   --font-display: 'Cormorant Garamond', Georgia, serif;
   --font-body: 'Jost', system-ui, sans-serif;
@@ -28,7 +30,7 @@
   --radius: 18px;
   --radius-sm: 10px;
 
-  --shadow: 0 4px 18px rgba(101, 84, 116, 0.11);
+  --shadow: 0 4px 18px rgba(75, 65, 70, 0.08);
 }
 
 * {
@@ -78,8 +80,8 @@ body {
 /* ---------- Cards ---------- */
 
 .card-surface {
-  background: #FFFDF8;
-  border: 1px solid var(--lavender);
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 22px;
@@ -95,8 +97,8 @@ body {
 }
 
 .pill {
-  border: 1.5px solid var(--lavender);
-  background: var(--lavender-soft);
+  border: 1.5px solid var(--rose);
+  background: var(--rose-soft);
   color: var(--mauve-dark);
   border-radius: 999px;
   padding: 8px 16px;
@@ -114,16 +116,16 @@ body {
 }
 
 .pill.active {
-  background: var(--lavender);
-  border-color: var(--lavender);
-  color: #fff;
+  background: var(--rose);
+  border-color: var(--rose);
+  color: #FFFFFF;
 }
 
 /* ---------- Buttons ---------- */
 
 .btn-primary {
-  background: var(--lavender);
-  color: #fff;
+  background: var(--rose);
+  color: #FFFFFF;
   border: none;
   border-radius: var(--radius-sm);
   padding: 12px 22px;
@@ -145,7 +147,7 @@ body {
 .btn-secondary {
   background: transparent;
   color: var(--mauve-dark);
-  border: 1.5px solid var(--lavender);
+  border: 1.5px solid var(--line);
   border-radius: var(--radius-sm);
   padding: 10px 18px;
   font-family: var(--font-body);
@@ -160,8 +162,7 @@ body {
   display: flex;
   gap: 8px;
   margin-bottom: 24px;
-  border-bottom: 1.5px solid var(--lavender);
-  padding-bottom: 0;
+  border-bottom: 1.5px solid var(--line);
 }
 
 .nav-tab {
@@ -180,7 +181,7 @@ body {
 .nav-tab.active {
   opacity: 1;
   color: var(--mauve-dark);
-  border-bottom-color: var(--butter);
+  border-bottom-color: var(--gold);
 }
 
 /* ---------- Flashcards ---------- */
@@ -217,7 +218,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 14px 4px;
-  border-bottom: 1px solid var(--lavender);
+  border-bottom: 1px solid var(--line);
 }
 
 .deck-list-item:last-child {
@@ -248,13 +249,13 @@ body {
 }
 
 .chat-bubble.them {
-  background: var(--lavender-soft);
+  background: var(--rose-soft);
   color: var(--mauve-dark);
   align-self: flex-start;
 }
 
 .chat-bubble.me {
-  background: var(--blush-soft);
+  background: var(--rose-pale);
   color: var(--ink);
   align-self: flex-end;
 }
@@ -267,12 +268,12 @@ body {
 
 .chat-input-row input {
   flex: 1;
-  border: 1.5px solid var(--lavender);
+  border: 1.5px solid var(--line);
   border-radius: var(--radius-sm);
   padding: 10px 14px;
   font-family: var(--font-body);
   font-size: 0.95rem;
-  background: #FFFDF8;
+  background: var(--surface);
   color: var(--ink);
 }
 
@@ -288,7 +289,7 @@ body {
 }
 
 .grammar-example {
-  background: var(--lavender-soft);
+  background: var(--rose-soft);
   border-radius: var(--radius-sm);
   padding: 10px 14px;
   margin-top: 8px;
