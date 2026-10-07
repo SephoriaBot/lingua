@@ -16,15 +16,21 @@ export default function Flashcards({
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
 
+  const isASL = languageId === 'asl';
+
   useEffect(() => {
     dbCall<{ decks: Deck[] }>('decks', { languageId })
       .then((r) => setDecks(r.decks))
       .catch(() => setDecks([]));
+
     setActiveDeck(null);
   }, [languageId, unlockedDay]);
 
   async function openDeck(deck: Deck) {
-    const res = await dbCall<{ cards: Card[] }>('cards', { deckId: deck.id });
+    const res = await dbCall<{ cards: Card[] }>('cards', {
+      deckId: deck.id,
+    });
+
     setCards(res.cards);
     setActiveDeck(deck);
     setIndex(0);
@@ -39,16 +45,40 @@ export default function Flashcards({
   if (!activeDeck) {
     return (
       <div className="card-surface">
-        <h2 style={{ fontFamily: 'var(--font-display)', color: 'var(--moss-dark)', marginTop: 0 }}>
-          Choose a deck
+        <h2
+          style={{
+            fontFamily: 'var(--font-display)',
+            color: 'var(--moss-dark)',
+            marginTop: 0,
+          }}
+        >
+          {isASL ? 'Choose a lesson' : 'Choose a deck'}
         </h2>
-        {decks.length === 0 && <p style={{ opacity: 0.6 }}>No decks yet for this language.</p>}
+
+        {isASL && (
+          <p style={{ opacity: 0.65, marginTop: -4 }}>
+            Learn the signs, then practice them yourself.
+          </p>
+        )}
+
+        {decks.length === 0 && (
+          <p style={{ opacity: 0.6 }}>
+            No lessons yet for this language.
+          </p>
+        )}
+
         {decks.map((deck) => (
-          <div key={deck.id} className="deck-list-item" onClick={() => openDeck(deck)} role="button">
+          <div
+            key={deck.id}
+            className="deck-list-item"
+            onClick={() => openDeck(deck)}
+            role="button"
+          >
             <div>
               <div className="deck-title">{deck.title}</div>
               <div className="deck-desc">{deck.description}</div>
             </div>
+
             <span style={{ opacity: 0.5 }}>→</span>
           </div>
         ))}
@@ -60,45 +90,194 @@ export default function Flashcards({
 
   return (
     <div className="card-surface">
-      <button className="btn-secondary" onClick={() => setActiveDeck(null)} style={{ marginBottom: 16 }}>
-        ← Decks
+      <button
+        className="btn-secondary"
+        onClick={() => setActiveDeck(null)}
+        style={{ marginBottom: 16 }}
+      >
+        ← {isASL ? 'Lessons' : 'Decks'}
       </button>
+
       {card ? (
         <>
-          <div className="flashcard" onClick={() => setRevealed((r) => !r)}>
-            <div className="front" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                {revealed ? card.back : card.front}
-                <SpeakButton text={card.front} languageId={languageId} />
-              </div>
-              {/* Pinyin stays visible whether or not the card is revealed —
-                  it's what makes the character readable in the first place. */}
-              {(card.romaji || card.pinyin) && (
-                <div style={{ fontSize: '0.9rem', opacity: 0.65 }}>{card.romaji || card.pinyin}</div>
-              )}
-            </div>
-            {revealed && card.example_sentence && (
-              <div className="example">
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  {card.example_sentence}
-                  <SpeakButton text={card.example_sentence} languageId={languageId} />
-                </span>
-                <br />
-                {card.example_translation}
-              </div>
+          <div
+            className="flashcard"
+            onClick={() => setRevealed((r) => !r)}
+            style={{
+              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 10,
+            }}
+          >
+            {!revealed ? (
+              <>
+                <div
+                  style={{
+                    fontSize: isASL ? '2.2rem' : undefined,
+                    fontWeight: 600,
+                    textAlign: 'center',
+                  }}
+                >
+                  {card.front}
+                </div>
+
+                {!isASL && (
+                  <SpeakButton
+                    text={card.front}
+                    languageId={languageId}
+                  />
+                )}
+
+                {(card.romaji || card.pinyin) && (
+                  <div
+                    style={{
+                      fontSize: '0.9rem',
+                      opacity: 0.65,
+                    }}
+                  >
+                    {card.romaji || card.pinyin}
+                  </div>
+                )}
+
+                <div
+                  style={{
+                    fontSize: '0.85rem',
+                    opacity: 0.5,
+                    marginTop: 8,
+                  }}
+                >
+                  Tap to reveal
+                </div>
+              </>
+            ) : (
+              <>
+                {isASL && card.gloss && (
+                  <div
+                    style={{
+                      fontSize: '0.9rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                      opacity: 0.55,
+                    }}
+                  >
+                    ASL GLOSS
+                  </div>
+                )}
+
+                <div
+                  style={{
+                    fontSize: isASL ? '1.8rem' : undefined,
+                    fontWeight: 600,
+                    textAlign: 'center',
+                  }}
+                >
+                  {card.back}
+                </div>
+
+                {isASL && card.gloss && (
+                  <div
+                    style={{
+                      fontSize: '1.15rem',
+                      fontWeight: 600,
+                      opacity: 0.8,
+                      textAlign: 'center',
+                    }}
+                  >
+                    {card.gloss}
+                  </div>
+                )}
+
+                {card.example_sentence && (
+                  <div
+                    className="example"
+                    style={{
+                      marginTop: 8,
+                      textAlign: 'center',
+                    }}
+                  >
+                    <div>{card.example_sentence}</div>
+
+                    <div
+                      style={{
+                        opacity: 0.7,
+                        marginTop: 4,
+                      }}
+                    >
+                      {card.example_translation}
+                    </div>
+
+                    {!isASL && (
+                      <SpeakButton
+                        text={card.example_sentence}
+                        languageId={languageId}
+                      />
+                    )}
+                  </div>
+                )}
+
+                {isASL && (
+                  <div
+                    style={{
+                      fontSize: '0.85rem',
+                      opacity: 0.55,
+                      marginTop: 8,
+                      textAlign: 'center',
+                    }}
+                  >
+                    Practice the sign yourself.
+                  </div>
+                )}
+              </>
             )}
-            {!revealed && <div style={{ fontSize: '0.85rem', opacity: 0.5 }}>Tap to reveal</div>}
           </div>
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 16 }}>
-            <button className="btn-secondary" onClick={() => go(-1)} aria-label="Previous card">‹</button>
-            <button className="btn-secondary" onClick={() => go(1)} aria-label="Next card">›</button>
+
+          <div
+            style={{
+              display: 'flex',
+              gap: 8,
+              justifyContent: 'center',
+              marginTop: 16,
+            }}
+          >
+            <button
+              className="btn-secondary"
+              onClick={(e) => {
+                e.stopPropagation();
+                go(-1);
+              }}
+              aria-label="Previous card"
+            >
+              ‹
+            </button>
+
+            <button
+              className="btn-secondary"
+              onClick={(e) => {
+                e.stopPropagation();
+                go(1);
+              }}
+              aria-label="Next card"
+            >
+              ›
+            </button>
           </div>
-          <p style={{ textAlign: 'center', opacity: 0.5, fontSize: '0.85rem', marginTop: 14 }}>
+
+          <p
+            style={{
+              textAlign: 'center',
+              opacity: 0.5,
+              fontSize: '0.85rem',
+              marginTop: 14,
+            }}
+          >
             Card {index + 1} of {cards.length}
           </p>
         </>
       ) : (
-        <p>This deck has no cards yet.</p>
+        <p>This lesson has no cards yet.</p>
       )}
     </div>
   );
