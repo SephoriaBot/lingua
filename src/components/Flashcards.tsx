@@ -154,17 +154,32 @@ export default function Flashcards({
               </>
             ) : (
               <>
-{isASL && card.media_url && (
-  <a
-    href={card.media_url}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="asl-sign-button"
-    onClick={(e) => e.stopPropagation()}
-  >
-    🤟 Watch the sign
-  </a>
-)}
+{isASL && card.media_url && card.media_type !== 'video' && (
+                  <img
+                    src={card.media_url}
+                    alt={`ASL sign for ${card.front}`}
+                    loading="lazy"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: 220,
+                      objectFit: 'contain',
+                      borderRadius: 12,
+                    }}
+                  />
+                )}
+
+                {isASL && card.media_url && card.media_type === 'video' && (
+                  <a
+                    href={card.media_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="asl-sign-button"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    🤟 Watch the sign
+                  </a>
+                )}
+
                 {isASL && card.gloss && (
                   <div
                     style={{
