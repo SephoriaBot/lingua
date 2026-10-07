@@ -56,9 +56,15 @@ export default function ConversationPractice({
   if (!active) {
     return (
       <div className="card-surface">
-        <h2 style={{ fontFamily: 'var(--font-display)', color: 'var(--moss-dark)', marginTop: 0 }}>
-          Pick a scenario
-        </h2>
+       <h2
+  style={{
+    fontFamily: 'var(--font-display)',
+    color: 'var(--moss-dark)',
+    marginTop: 0,
+  }}
+>
+  {languageId === 'asl' ? 'ASL practice' : 'Pick a scenario'}
+</h2>
         {scenarios.length === 0 && <p style={{ opacity: 0.6 }}>No scenarios yet for this language.</p>}
         {scenarios.map((s) => (
           <div key={s.id} className="deck-list-item" onClick={() => startScenario(s)} role="button">
@@ -76,12 +82,21 @@ export default function ConversationPractice({
         ← Scenarios
       </button>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {messages.map((m, i) => (
-          <div key={i} className={`chat-bubble ${m.role === 'assistant' ? 'them' : 'me'}`} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ whiteSpace: 'pre-line' }}>{m.content}</span>
-            {m.role === 'assistant' && <SpeakButton text={m.content} languageId={languageId} />}
-          </div>
-        ))}
+       {messages.map((m, i) => (
+  <div
+    key={i}
+    className={`chat-bubble ${m.role === 'assistant' ? 'them' : 'me'}`}
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 6,
+    }}
+  >
+    <span style={{ whiteSpace: 'pre-line' }}>
+      {m.content}
+    </span>
+  </div>
+))}
         {sending && <div className="chat-bubble them" style={{ opacity: 0.6 }}>…</div>}
       </div>
       <div className="chat-input-row">
@@ -90,7 +105,11 @@ export default function ConversationPractice({
           onChange={(e) => setInput(e.target.value)}
           maxLength={500}
           onKeyDown={(e) => e.key === 'Enter' && send()}
-          placeholder="Type your reply (romaji or English is fine)…"
+          placeholder={
+  languageId === 'asl'
+    ? 'Type your ASL gloss or English reply…'
+    : 'Type your reply (romaji or English is fine)…'
+}
         />
         <button className="btn-primary" onClick={send} disabled={sending}>
           Send
