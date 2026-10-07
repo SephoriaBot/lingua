@@ -25,6 +25,9 @@ export interface Card {
   example_translation: string;
   pinyin?: string;
   romaji?: string;
+  media_url?: string | null;
+  media_type?: 'image' | 'video' | null;
+  gloss?: string;
 }
 
 export interface GrammarNote {
