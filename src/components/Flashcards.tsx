@@ -154,6 +154,17 @@ export default function Flashcards({
               </>
             ) : (
               <>
+{isASL && card.media_url && (
+  <a
+    href={card.media_url}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="asl-sign-button"
+    onClick={(e) => e.stopPropagation()}
+  >
+    🤟 Watch the sign
+  </a>
+)}
                 {isASL && card.gloss && (
                   <div
                     style={{
