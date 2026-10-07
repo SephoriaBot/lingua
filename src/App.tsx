@@ -172,36 +172,70 @@ export default function App() {
         )}
       </div>
 
-      <div className="nav-row">
-        <button className={`nav-tab ${mode === 'flashcards' ? 'active' : ''}`} onClick={() => setMode('flashcards')}>
+           <div className="nav-row">
+        <button
+          className={`nav-tab ${mode === 'flashcards' ? 'active' : ''}`}
+          onClick={() => setMode('flashcards')}
+        >
           <img src="/flashcards.png" alt="" className="nav-tab-icon" />
           Flashcards
         </button>
-        <button className={`nav-tab ${mode === 'listening' ? 'active' : ''}`} onClick={() => setMode('listening')}>
-          <img src="/listening.png" alt="" className="nav-tab-icon" />
-          Listening
-        </button>
-        <button className={`nav-tab ${mode === 'grammar' ? 'active' : ''}`} onClick={() => setMode('grammar')}>
+
+        {activeLanguage?.id !== 'asl' && (
+          <button
+            className={`nav-tab ${mode === 'listening' ? 'active' : ''}`}
+            onClick={() => setMode('listening')}
+          >
+            <img src="/listening.png" alt="" className="nav-tab-icon" />
+            Listening
+          </button>
+        )}
+
+        <button
+          className={`nav-tab ${mode === 'grammar' ? 'active' : ''}`}
+          onClick={() => setMode('grammar')}
+        >
           <img src="/grammar.png" alt="" className="nav-tab-icon" />
           Grammar
         </button>
-        <button className={`nav-tab ${mode === 'conversation' ? 'active' : ''}`} onClick={() => setMode('conversation')}>
+
+        <button
+          className={`nav-tab ${mode === 'conversation' ? 'active' : ''}`}
+          onClick={() => setMode('conversation')}
+        >
           <img src="/conversations.png" alt="" className="nav-tab-icon" />
           Conversation
         </button>
       </div>
 
       {activeLanguage && mode === 'flashcards' && (
-        <Flashcards languageId={activeLanguage.id} unlockedDay={unlockedDay} />
+        <Flashcards
+          languageId={activeLanguage.id}
+          unlockedDay={unlockedDay}
+        />
       )}
-      {activeLanguage && mode === 'listening' && (
-        <ListeningDrill languageId={activeLanguage.id} unlockedDay={unlockedDay} />
-      )}
+
+      {activeLanguage &&
+        mode === 'listening' &&
+        activeLanguage.id !== 'asl' && (
+          <ListeningDrill
+            languageId={activeLanguage.id}
+            unlockedDay={unlockedDay}
+          />
+        )}
+
       {activeLanguage && mode === 'grammar' && (
-        <GrammarNotes languageId={activeLanguage.id} unlockedDay={unlockedDay} />
+        <GrammarNotes
+          languageId={activeLanguage.id}
+          unlockedDay={unlockedDay}
+        />
       )}
+
       {activeLanguage && mode === 'conversation' && (
-        <ConversationPractice languageId={activeLanguage.id} unlockedDay={unlockedDay} />
+        <ConversationPractice
+          languageId={activeLanguage.id}
+          unlockedDay={unlockedDay}
+        />
       )}
     </div>
   );
