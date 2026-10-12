@@ -121,9 +121,24 @@ export default function ListeningDrill({
 
   return (
     <div className="card-surface">
-      <button className="btn-secondary" onClick={() => setActiveDeck(null)} style={{ marginBottom: 16 }}>
-        ← Decks
-      </button>
+      <button
+  className="btn-secondary"
+  onClick={() => setActiveDeck(null)}
+  style={{
+    marginBottom: 16,
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 8,
+  }}
+>
+  <img
+    src="/travel.png"
+    alt=""
+    aria-hidden="true"
+    style={{ width: 20, height: 20, objectFit: 'contain' }}
+  />
+  Decks
+</button>
       {card ? (
         <>
           <div className="flashcard" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
@@ -146,9 +161,24 @@ export default function ListeningDrill({
                     fontSize: '1rem',
                   }}
                 />
-                <button className="btn-primary" onClick={checkAnswer} disabled={!input.trim()}>
-                  Check
-                </button>
+                <button
+  className="btn-primary"
+  onClick={checkAnswer}
+  disabled={!input.trim()}
+  style={{
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 8,
+  }}
+>
+  <img
+    src="/check.png"
+    alt=""
+    aria-hidden="true"
+    style={{ width: 20, height: 20, objectFit: 'contain' }}
+  />
+  Check
+</button>
               </>
             ) : (
               <>

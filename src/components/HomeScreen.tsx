@@ -54,9 +54,23 @@ export function Home({
         })}
       </div>
       <div style={{ textAlign: 'center', marginTop: 20 }}>
-        <button className="btn-secondary" onClick={onEdit}>
-          Change my languages
-        </button>
+        <button
+  className="btn-secondary"
+  onClick={onEdit}
+  style={{
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 8,
+  }}
+>
+  <img
+    src="/books.png"
+    alt=""
+    aria-hidden="true"
+    style={{ width: 20, height: 20, objectFit: 'contain' }}
+  />
+  Change my languages
+</button>
       </div>
     </div>
   );

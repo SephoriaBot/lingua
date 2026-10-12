@@ -132,9 +132,24 @@ export default function ConversationPractice({
 
   return (
     <div className="card-surface">
-      <button className="btn-secondary" onClick={() => setActive(null)} style={{ marginBottom: 16 }}>
-        ← Scenarios
-      </button>
+      <button
+  className="btn-secondary"
+  onClick={() => setActive(null)}
+  style={{
+    marginBottom: 16,
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 8,
+  }}
+>
+  <img
+    src="/compass.png"
+    alt=""
+    aria-hidden="true"
+    style={{ width: 20, height: 20, objectFit: 'contain' }}
+  />
+  Scenarios
+</button>
       <span style={{ marginLeft: 10, fontSize: '0.85rem', opacity: 0.6 }}>
         {LEVELS.find((l) => l.id === level)?.label}
       </span>
@@ -186,8 +201,14 @@ export default function ConversationPractice({
           }
         />
         <button className="btn-primary" onClick={send} disabled={sending}>
-          Send
-        </button>
+  <img
+    src="/send.png"
+    alt=""
+    aria-hidden="true"
+    style={{ width: 20, height: 20, objectFit: 'contain' }}
+  />
+  Send
+</button>
       </div>
     </div>
   );
