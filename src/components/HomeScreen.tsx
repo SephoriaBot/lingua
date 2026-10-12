@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Language, LessonState } from '../types';
+import { FlagImage } from './FlagImage';
 
 export const MAX_FOCUS = 3;
 
