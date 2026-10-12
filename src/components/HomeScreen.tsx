@@ -37,7 +37,10 @@ export function Home({
               onClick={() => onOpen(lang.id)}
               style={{ display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }}
             >
-              <div style={{ fontSize: '2.2rem', lineHeight: 1 }}>{lang.flag_emoji}</div>
+            
+<div style={{ lineHeight: 1 }}>
+  <FlagImage emoji={lang.flag_emoji} size={35} />
+</div>
               <div style={{ flex: 1 }}>
                 <div className="deck-title">{lang.name}</div>
                 <div style={{ opacity: 0.6, fontSize: '0.85rem' }}>
@@ -134,7 +137,11 @@ export function LanguagePicker({
                 outline: on ? '2px solid var(--moss-dark)' : 'none',
               }}
             >
-              <div style={{ fontSize: '1.8rem', lineHeight: 1 }}>{lang.flag_emoji}</div>
+              
+<div style={{ lineHeight: 1 }}>
+  <FlagImage emoji={lang.flag_emoji} size={35} />
+</div>
+
               <div style={{ flex: 1 }}>
                 <div className="deck-title">{lang.name}</div>
                 <div style={{ opacity: 0.6, fontSize: '0.85rem' }}>{lang.native_name}</div>

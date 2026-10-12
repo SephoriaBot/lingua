@@ -335,3 +335,11 @@ body {
   transform: translateY(-1px);
   opacity: 0.9;
 }
+
+.language-flag {
+  width: 24px;
+  height: 17px;
+  object-fit: contain;
+  vertical-align: middle;
+  display: inline-block;
+}
