@@ -139,7 +139,15 @@ export function LanguagePicker({
                 <div className="deck-title">{lang.name}</div>
                 <div style={{ opacity: 0.6, fontSize: '0.85rem' }}>{lang.native_name}</div>
               </div>
-              <span style={{ fontSize: '1.2rem' }}>{on ? '✓' : ''}</span>
+              <span style={{ display: 'flex', alignItems: 'center' }}>
+  {on && (
+    <img
+      src="/check.png"
+      alt="Selected"
+      style={{ width: 24, height: 24, objectFit: 'contain' }}
+    />
+  )}
+</span>
             </div>
           );
         })}
