@@ -17,7 +17,13 @@ const flagImages: Record<string, string> = {
   '🤟': '/asl.png',
 };
 
-export function FlagImage({ emoji }: { emoji: string }) {
+export function FlagImage({
+  emoji,
+  size = 24,
+}: {
+  emoji: string;
+  size?: number;
+}) {
   const src = flagImages[emoji];
 
   if (!src) return <span>{emoji}</span>;
@@ -27,7 +33,13 @@ export function FlagImage({ emoji }: { emoji: string }) {
       src={src}
       alt=""
       aria-hidden="true"
-      className="language-flag"
+      style={{
+        width: size * 1.4,
+        height: size,
+        objectFit: 'contain',
+        verticalAlign: 'middle',
+        display: 'inline-block',
+      }}
     />
   );
 }
