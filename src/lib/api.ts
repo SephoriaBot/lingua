@@ -28,5 +28,8 @@ async function post<T>(path: string, body: object): Promise<T> {
 export const dbCall = <T>(action: string, params: object = {}) =>
   post<T>('/api/db', { action, ...params });
 
-export const chatCall = (scenarioId: string, messages: { role: string; content: string }[]) =>
-  post<{ reply: string }>('/api/chat', { scenarioId, messages });
+export const chatCall = (
+  scenarioId: string,
+  messages: { role: string; content: string }[],
+  level: 'easy' | 'normal' | 'challenge' = 'normal'
+) => post<{ reply: string }>('/api/chat', { scenarioId, messages, level });

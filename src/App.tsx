@@ -7,6 +7,7 @@ import Flashcards from './components/Flashcards';
 import GrammarNotes from './components/GrammarNotes';
 import ConversationPractice from './components/ConversationPractice';
 import ListeningDrill from './components/ListeningDrill';
+import { Home, LanguagePicker } from './components/HomeScreen';
 
 type Mode = 'flashcards' | 'listening' | 'grammar' | 'conversation';
 
@@ -46,14 +47,28 @@ export default function App() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>('flashcards');
   const [lesson, setLesson] = useState<LessonState | null>(null);
+  const [myLanguageIds, setMyLanguageIds] = useState<string[]>([]);
+  const [progress, setProgress] = useState<Record<string, LessonState>>({});
+  const [view, setView] = useState<'home' | 'learn'>('home');
+  const [picking, setPicking] = useState(false);
+  const [savingPicks, setSavingPicks] = useState(false);
+  const [pickError, setPickError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
-    dbCall<{ languages: Language[]; settings: UserSettings; lesson: LessonState }>('bootstrap')
+    dbCall<{
+      languages: Language[];
+      settings: UserSettings;
+      lesson: LessonState;
+      myLanguages: string[];
+      progress: Record<string, LessonState>;
+    }>('bootstrap')
       .then((r) => {
         if (cancelled) return;
         setLanguages(r.languages);
+        setMyLanguageIds(r.myLanguages);
+        setProgress(r.progress);
         setSettings(r.settings);
         setLesson(r.lesson);
         setLoading(false);
@@ -94,6 +109,7 @@ export default function App() {
     try {
       const r = await dbCall<{ lesson: LessonState }>('completeLesson', { languageId: activeLanguageId });
       setLesson(r.lesson);
+      setProgress((p) => ({ ...p, [activeLanguageId]: r.lesson }));
     } catch {
       /* leave the button available so they can try again */
     }
@@ -107,6 +123,31 @@ export default function App() {
     } catch {
       /* ignore; the switcher stays on the current language */
     }
+  }
+
+  async function saveLanguages(ids: string[]) {
+    setSavingPicks(true);
+    setPickError(null);
+    try {
+      const r = await dbCall<{ myLanguages: string[]; progress: Record<string, LessonState> }>(
+        'setMyLanguages',
+        { languageIds: ids }
+      );
+      setMyLanguageIds(r.myLanguages);
+      setProgress(r.progress);
+      setPicking(false);
+      setView('home');
+    } catch (e) {
+      setPickError(e instanceof Error ? e.message : 'Could not save. Please try again.');
+    } finally {
+      setSavingPicks(false);
+    }
+  }
+
+  async function openLanguage(id: string) {
+    await setActiveLanguage(id);
+    setMode('flashcards');
+    setView('learn');
   }
 
   // Wait for Clerk to finish checking the session before deciding what to show.
@@ -141,23 +182,64 @@ export default function App() {
 
   const activeLanguage = languages.find((l) => l.id === settings.active_language_id) ?? languages[0];
   const unlockedDay = lesson.unlockedDay;
+  const myLanguages = languages.filter((l) => myLanguageIds.includes(l.id));
+
+  const header = (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <div>
+        <img src="/linguatitle.png" alt="Lingua" className="brand-logo" />
+        <div className="subtitle">Learn languages, one lesson at a time.</div>
+      </div>
+      <UserButton afterSignOutUrl="/" />
+    </div>
+  );
+
+  // First visit (nothing chosen yet) or "Change my languages".
+  if (picking || myLanguageIds.length === 0) {
+    return (
+      <div className="app-shell">
+        {header}
+        <LanguagePicker
+          languages={languages}
+          initial={myLanguageIds}
+          saving={savingPicks}
+          error={pickError}
+          onSave={saveLanguages}
+          onCancel={myLanguageIds.length > 0 ? () => setPicking(false) : undefined}
+        />
+      </div>
+    );
+  }
+
+  if (view === 'home') {
+    return (
+      <div className="app-shell">
+        {header}
+        <Home
+          languages={languages}
+          myLanguageIds={myLanguageIds}
+          progress={progress}
+          onOpen={openLanguage}
+          onEdit={() => setPicking(true)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <img src="/linguatitle.png" alt="Lingua" className="brand-logo" />
-          <div className="subtitle">Learn languages, one lesson at a time.</div>
-        </div>
-        <UserButton afterSignOutUrl="/" />
+      {header}
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <button className="btn-secondary" onClick={() => setView('home')} style={{ padding: '8px 14px' }}>
+          ← Home
+        </button>
+        <LanguageSwitcher
+          languages={myLanguages}
+          activeId={activeLanguage?.id ?? ''}
+          onChange={setActiveLanguage}
+        />
       </div>
-
-      <LanguageSwitcher
-        languages={languages}
-        activeId={activeLanguage?.id ?? ''}
-        onChange={setActiveLanguage}
-      />
-
 
       <div className="card-surface" style={{ marginBottom: 16, textAlign: 'center' }}>
         {lesson.status === 'open' ? (
