@@ -13,24 +13,33 @@ export default function SpeakButton({
   label?: string;
 }) {
   return (
-    <button
-      type="button"
-      onClick={(e) => {
-        e.stopPropagation();
-        speak(text, languageId);
-      }}
-      aria-label={label ?? `Listen to "${text}"`}
-      style={{
-        background: 'none',
-        border: 'none',
-        cursor: 'pointer',
-        fontSize: '1.1rem',
-        lineHeight: 1,
-        padding: '2px 6px',
-        opacity: 0.75,
-      }}
-    >
-      🔊
-    </button>
+<button
+  type="button"
+  onClick={(e) => {
+    e.stopPropagation();
+    speak(text, languageId);
+  }}
+  aria-label={label ?? `Listen to "${text}"`}
+  style={{
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    lineHeight: 1,
+    padding: '2px 6px',
+    opacity: 0.75,
+  }}
+>
+  <img
+    src="/speakbutton.png"
+    alt=""
+    aria-hidden="true"
+    style={{
+      width: '22px',
+      height: '22px',
+      objectFit: 'contain',
+      display: 'block',
+    }}
+  />
+</button>
   );
 }
