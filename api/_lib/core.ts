@@ -313,6 +313,23 @@ const actions: Record<string, (c: Ctx, b: Body) => Promise<unknown>> = {
   },
 
   // Note: system_prompt is deliberately NOT sent to the browser.
+  // The signs the learner has unlocked so far (for the tap-to-reply picker).
+  async signs({ db, userId, today }, b) {
+    await ensureTables(db);
+    const languageId = idParam(b.languageId, 'languageId');
+    await assertLanguage(db, languageId);
+    const { unlockedDay } = await getLessonState(db, userId, languageId, today);
+    const res = await db.execute({
+      sql: `select c.gloss, c.media_url, c.media_type from cards c
+            join decks d on d.id = c.deck_id
+            where d.language_id = ? and d.sort_order <= ?
+              and c.gloss is not null and trim(c.gloss) != ''
+            order by d.sort_order limit 300`,
+      args: [languageId, unlockedDay],
+    });
+    return { signs: toObjects(res) };
+  },
+
   async scenarios({ db, userId, today }, b) {
     await ensureTables(db);
     const languageId = idParam(b.languageId, 'languageId');
