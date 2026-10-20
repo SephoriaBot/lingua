@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { dbCall, chatCall } from '../lib/api';
 import SpeakButton from './SpeakButton';
 import type { ConversationPrompt } from '../types';
+import { parseAslReply, type SignItem } from '../lib/aslSigns';
 
 // `tip` is the optional correction note the tutor adds after a ~~~ line.
 interface ChatMsg { role: 'user' | 'assistant'; content: string; tip?: string }
@@ -29,6 +30,74 @@ function splitReply(raw: string): { content: string; tip?: string } {
   const content = parts[0].trim();
   const tip = parts.slice(1).join(' ').trim();
   return tip ? { content, tip } : { content };
+}
+
+// One sign as a picture. If the image can't be loaded (a sign we have no picture for yet),
+// it falls back to a plain text tile so nothing goes missing.
+function SignTile({ item }: { item: SignItem }) {
+  const [failed, setFailed] = useState(false);
+  const box = {
+    width: 76,
+    minHeight: 76,
+    borderRadius: 12,
+    border: '1px solid rgba(128,128,128,0.3)',
+    background: '#fff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxSizing: 'border-box' as const,
+  };
+  if (failed) {
+    return (
+      <div style={{ ...box, padding: 6, fontSize: '0.75rem', fontWeight: 600, textAlign: 'center', color: '#333' }}>
+        {item.label}
+      </div>
+    );
+  }
+  return (
+    <div style={box}>
+      <img
+        src={item.src}
+        alt={`ASL sign: ${item.label}`}
+        title={item.label}
+        loading="lazy"
+        onError={() => setFailed(true)}
+        style={{ width: '100%', height: 70, objectFit: 'contain', borderRadius: 10 }}
+      />
+    </div>
+  );
+}
+
+// The ASL partner's message: a row of sign pictures, with the grammar cue and the
+// English translation tucked behind a small button.
+function AslBubble({ content }: { content: string }) {
+  const [showEnglish, setShowEnglish] = useState(false);
+  const parsed = parseAslReply(content);
+  if (!parsed) return <span style={{ whiteSpace: 'pre-line' }}>{content}</span>;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        {parsed.signs.map((sg, i) => (
+          <SignTile key={i} item={sg} />
+        ))}
+      </div>
+      {parsed.cues.length > 0 && (
+        <div style={{ fontSize: '0.8rem', fontStyle: 'italic', opacity: 0.75 }}>{parsed.cues.join(' · ')}</div>
+      )}
+      {parsed.english && (
+        <>
+          <button
+            className="btn-secondary"
+            style={{ padding: '4px 10px', fontSize: '0.8rem' }}
+            onClick={() => setShowEnglish((v) => !v)}
+          >
+            {showEnglish ? 'Hide English' : 'Show English'}
+          </button>
+          {showEnglish && <div style={{ fontSize: '0.9rem' }}>{parsed.english}</div>}
+        </>
+      )}
+    </div>
+  );
 }
 
 export default function ConversationPractice({
@@ -168,7 +237,11 @@ export default function ConversationPractice({
               className={`chat-bubble ${m.role === 'assistant' ? 'them' : 'me'}`}
               style={{ display: 'flex', alignItems: 'center', gap: 6 }}
             >
-              <span style={{ whiteSpace: 'pre-line' }}>{m.content}</span>
+              {languageId === 'asl' && m.role === 'assistant' && !m.content.startsWith('⚠️') ? (
+                <AslBubble content={m.content} />
+              ) : (
+                <span style={{ whiteSpace: 'pre-line' }}>{m.content}</span>
+              )}
             </div>
             {m.tip && (
               <div
