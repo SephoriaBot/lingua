@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { dbCall, chatCall } from '../lib/api';
 import SpeakButton from './SpeakButton';
 import type { ConversationPrompt } from '../types';
-import { parseAslReply, type SignItem } from '../lib/aslSigns';
+import { parseAslReply, signSrc, type SignItem } from '../lib/aslSigns';
 
 // `tip` is the optional correction note the tutor adds after a ~~~ line.
-interface ChatMsg { role: 'user' | 'assistant'; content: string; tip?: string }
+// `signs` is set when the learner built the reply by tapping signs (shown as pictures).
+interface ChatMsg { role: 'user' | 'assistant'; content: string; tip?: string; signs?: string[] }
 
 type Level = 'easy' | 'normal' | 'challenge';
 const LEVELS: { id: Level; label: string; hint: string }[] = [
@@ -34,11 +35,11 @@ function splitReply(raw: string): { content: string; tip?: string } {
 
 // One sign as a picture. If the image can't be loaded (a sign we have no picture for yet),
 // it falls back to a plain text tile so nothing goes missing.
-function SignTile({ item }: { item: SignItem }) {
+function SignTile({ item, size = 76 }: { item: SignItem; size?: number }) {
   const [failed, setFailed] = useState(false);
   const box = {
-    width: 76,
-    minHeight: 76,
+    width: size,
+    minHeight: size,
     borderRadius: 12,
     border: '1px solid rgba(128,128,128,0.3)',
     background: '#fff',
@@ -62,7 +63,7 @@ function SignTile({ item }: { item: SignItem }) {
         title={item.label}
         loading="lazy"
         onError={() => setFailed(true)}
-        style={{ width: '100%', height: 70, objectFit: 'contain', borderRadius: 10 }}
+        style={{ width: '100%', height: size - 6, objectFit: 'contain', borderRadius: 10 }}
       />
     </div>
   );
@@ -113,6 +114,10 @@ export default function ConversationPractice({
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [level, setLevel] = useState<Level>(loadLevel);
+  const isASL = languageId === 'asl';
+  // ASL: the signs unlocked so far, and the reply being built by tapping them.
+  const [palette, setPalette] = useState<SignItem[]>([]);
+  const [picked, setPicked] = useState<string[]>([]);
 
   function chooseLevel(l: Level) {
     setLevel(l);
@@ -130,16 +135,45 @@ export default function ConversationPractice({
     setActive(null);
   }, [languageId, unlockedDay]);
 
+  useEffect(() => {
+    if (!isASL) return;
+    dbCall<{ signs: { gloss: string; media_url: string | null; media_type: string | null }[] }>('signs', {
+      languageId,
+    })
+      .then((r) => {
+        const seen = new Set<string>();
+        const items: SignItem[] = [];
+        for (const s of r.signs) {
+          const label = String(s.gloss).trim();
+          const key = label.toLowerCase();
+          if (!label || seen.has(key)) continue;
+          seen.add(key);
+          const useUploaded = s.media_url && s.media_type !== 'video';
+          items.push({ label, src: useUploaded ? String(s.media_url) : signSrc(label) });
+        }
+        // Whole signs first, single letters (fingerspelling) after.
+        const isLetter = (i: SignItem) => /^[A-Za-z]$/.test(i.label);
+        setPalette([...items.filter((i) => !isLetter(i)), ...items.filter(isLetter)]);
+      })
+      .catch(() => setPalette([]));
+  }, [languageId, unlockedDay, isASL]);
+
   function startScenario(prompt: ConversationPrompt) {
+    setPicked([]);
     setActive(prompt);
     setMessages([{ role: 'assistant', content: prompt.opening_line }]);
   }
 
   async function send() {
-    if (!input.trim() || !active || sending) return;
-    const nextMessages: ChatMsg[] = [...messages, { role: 'user', content: input }];
+    const text = picked.length > 0 ? picked.join(' ') : input.trim();
+    if (!text || !active || sending) return;
+    const nextMessages: ChatMsg[] = [
+      ...messages,
+      { role: 'user', content: text, ...(picked.length > 0 ? { signs: picked } : {}) },
+    ];
     setMessages(nextMessages);
     setInput('');
+    setPicked([]);
     setSending(true);
     try {
       // The server builds the system prompt and talks to Groq; we only send the
@@ -237,8 +271,14 @@ export default function ConversationPractice({
               className={`chat-bubble ${m.role === 'assistant' ? 'them' : 'me'}`}
               style={{ display: 'flex', alignItems: 'center', gap: 6 }}
             >
-              {languageId === 'asl' && m.role === 'assistant' && !m.content.startsWith('⚠️') ? (
+              {isASL && m.role === 'assistant' && !m.content.startsWith('⚠️') ? (
                 <AslBubble content={m.content} />
+              ) : m.signs ? (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'flex-end' }}>
+                  {m.signs.map((g, i) => (
+                    <SignTile key={i} item={{ label: g, src: signSrc(g) }} size={64} />
+                  ))}
+                </div>
               ) : (
                 <span style={{ whiteSpace: 'pre-line' }}>{m.content}</span>
               )}
@@ -261,6 +301,42 @@ export default function ConversationPractice({
         ))}
         {sending && <div className="chat-bubble them" style={{ opacity: 0.6 }}>…</div>}
       </div>
+      {isASL && (
+        <div style={{ marginTop: 14 }}>
+          <div style={{ fontSize: '0.85rem', opacity: 0.7, marginBottom: 6 }}>
+            Tap signs to build your reply
+          </div>
+          {picked.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', marginBottom: 8 }}>
+              {picked.map((g, i) => (
+                <button
+                  key={i}
+                  aria-label={`Remove ${g}`}
+                  onClick={() => setPicked((p) => p.filter((_, j) => j !== i))}
+                  style={{ padding: 0, border: 'none', background: 'none', cursor: 'pointer' }}
+                >
+                  <SignTile item={{ label: g, src: signSrc(g) }} size={56} />
+                </button>
+              ))}
+              <button className="btn-secondary" style={{ padding: '4px 10px', fontSize: '0.8rem' }} onClick={() => setPicked([])}>
+                Clear
+              </button>
+            </div>
+          )}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 190, overflowY: 'auto' }}>
+            {palette.map((sg) => (
+              <button
+                key={sg.label}
+                aria-label={`Add ${sg.label}`}
+                onClick={() => setPicked((p) => (p.length < 12 ? [...p, sg.label] : p))}
+                style={{ padding: 0, border: 'none', background: 'none', cursor: 'pointer' }}
+              >
+                <SignTile item={sg} size={56} />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="chat-input-row">
         <input
           value={input}
@@ -269,7 +345,7 @@ export default function ConversationPractice({
           onKeyDown={(e) => e.key === 'Enter' && send()}
           placeholder={
             languageId === 'asl'
-              ? 'Type your ASL gloss or English reply…'
+              ? 'Or type your reply (ASL gloss or English)…'
               : 'Type your reply (romaji or English is fine)…'
           }
         />
