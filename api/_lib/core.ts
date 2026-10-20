@@ -1,5 +1,11 @@
 import type { Client, ResultSet } from '@libsql/client';
 
+// Demo visitors get a random "guest_<32 hex>" id from their browser. It can never collide
+// with a Clerk id ("user_..."), and being random it works like a private key to that
+// guest's own data.
+const GUEST_RE = /^guest_[0-9a-f]{32}$/;
+export const isGuestId = (v: unknown): v is string => typeof v === 'string' && GUEST_RE.test(v);
+
 export class HttpError extends Error {
   constructor(public status: number, message: string) {
     super(message);
@@ -17,6 +23,8 @@ export const LIMITS = {
   chatPerMinute: Number(process.env.CHAT_PER_MINUTE ?? 12),
   chatPerDay: Number(process.env.CHAT_PER_DAY ?? 150),
   chatGlobalPerDay: Number(process.env.CHAT_GLOBAL_PER_DAY ?? 3000),
+  // All demo guests together share this many tutor messages per day.
+  guestChatPerDay: Number(process.env.GUEST_CHAT_PER_DAY ?? 300),
   maxMessages: 20,
   maxMessageChars: 800,
   maxTotalChars: 6000,
@@ -235,6 +243,25 @@ const actions: Record<string, (c: Ctx, b: Body) => Promise<unknown>> = {
     return { lesson: await getLessonState(db, userId, languageId, today) };
   },
 
+  // "Exit demo": wipes everything a guest created. Never works for real accounts.
+  async exitDemo({ db, userId }) {
+    if (!isGuestId(userId)) throw new HttpError(403, 'Demo only');
+    for (const table of [
+      'lesson_completions',
+      'user_languages',
+      'chat_usage',
+      'user_settings',
+      'card_progress',
+    ]) {
+      try {
+        await db.execute({ sql: `delete from ${table} where user_id = ?`, args: [userId] });
+      } catch {
+        /* table may not exist yet; nothing to wipe */
+      }
+    }
+    return { ok: true };
+  },
+
   async setLanguage({ db, userId }, b) {
     const languageId = idParam(b.languageId, 'languageId');
     await assertLanguage(db, languageId);
@@ -354,6 +381,10 @@ export async function consumeChatQuota(db: Client, userId: string, now = new Dat
   const checks: [string, string, number][] = [
     [userId, 'm:' + iso.slice(0, 16), LIMITS.chatPerMinute],
     [userId, 'd:' + iso.slice(0, 10), LIMITS.chatPerDay],
+    // Guests can make up new ids, so they also share one small daily pool.
+    ...(isGuestId(userId)
+      ? ([['__guest__', 'd:' + iso.slice(0, 10), LIMITS.guestChatPerDay]] as [string, string, number][])
+      : []),
     ['__global__', 'd:' + iso.slice(0, 10), LIMITS.chatGlobalPerDay],
   ];
   for (const [u, bucket, max] of checks) {
