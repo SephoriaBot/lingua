@@ -1,6 +1,6 @@
 import { verifyToken } from '@clerk/backend';
 import type { VercelRequest } from '@vercel/node';
-import { HttpError } from './core.js';
+import { HttpError, isGuestId } from './core.js';
 
 // Returns the Clerk user id from a *verified* session token.
 // The user id is never read from the request body.
@@ -13,6 +13,7 @@ export async function requireUser(req: VercelRequest): Promise<string> {
   const header = req.headers.authorization;
   const token = header && header.startsWith('Bearer ') ? header.slice(7) : '';
   if (!token) throw new HttpError(401, 'Please sign in');
+  if (isGuestId(token)) return token; // demo guest (see isGuestId in core.ts)
 
   // Optional but recommended: comma-separated list of your site origins,
   // e.g. https://lingua-nest.vercel.app
