@@ -8,8 +8,45 @@ export function setTokenGetter(fn: TokenGetter) {
   getToken = fn;
 }
 
+// Demo mode: a random "guest_<32 hex>" id kept in this browser, used when nobody is signed in.
+const GUEST_KEY = 'lingua:guest';
+const GUEST_RE = /^guest_[0-9a-f]{32}$/;
+let memoryGuest: string | null = null; // fallback if localStorage is blocked
+
+export function getGuestToken(): string | null {
+  try {
+    const v = localStorage.getItem(GUEST_KEY);
+    if (v && GUEST_RE.test(v)) return v;
+  } catch {
+    /* ignore storage failures (e.g. private browsing) */
+  }
+  return memoryGuest;
+}
+
+export function startGuest(): string {
+  const token = getGuestToken() ?? `guest_${crypto.randomUUID().replace(/-/g, '')}`;
+  memoryGuest = token;
+  try {
+    localStorage.setItem(GUEST_KEY, token);
+  } catch {
+    /* ignore storage failures */
+  }
+  return token;
+}
+
+// Forget the guest id on this device (used when someone signs in or exits the demo).
+export function forgetGuest() {
+  memoryGuest = null;
+  try {
+    localStorage.removeItem(GUEST_KEY);
+  } catch {
+    /* ignore storage failures */
+  }
+}
+
 async function post<T>(path: string, body: object): Promise<T> {
-  const token = getToken ? await getToken() : null;
+  // A signed-in user's token always wins; the guest id only applies when nobody is signed in.
+  const token = (getToken ? await getToken() : null) ?? getGuestToken();
   const res = await fetch(path, {
     method: 'POST',
     headers: {
