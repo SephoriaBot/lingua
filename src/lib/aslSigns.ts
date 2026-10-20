@@ -8,6 +8,13 @@ export const MULTI_WORD_SIGNS = new Set<string>(['thank_you']);
 
 export type SignItem = { label: string; src: string };
 
+// Picture path for one gloss. Single letters use the uppercase letter files (/asl/A.png);
+// everything else uses the lowercase name (/asl/thank_you.png).
+export function signSrc(gloss: string): string {
+  const g = gloss.trim();
+  return /^[A-Za-z]$/.test(g) ? `/asl/${g.toUpperCase()}.png` : `/asl/${norm(g)}.png`;
+}
+
 const norm = (s: string) =>
   s
     .toLowerCase()
@@ -61,7 +68,7 @@ export function parseAslReply(content: string): ParsedAsl | null {
       }
     }
     const label = tokens.slice(i, i + took).join(' ');
-    signs.push({ label, src: `/asl/${norm(tokens.slice(i, i + took).join('_'))}.png` });
+    signs.push({ label, src: signSrc(label) });
     i += took;
   }
   return { signs, cues, english };
