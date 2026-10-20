@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useUser, useAuth, SignIn, UserButton } from '@clerk/clerk-react';
-import { dbCall, setTokenGetter } from './lib/api';
+import { useUser, useAuth, SignIn, SignInButton, UserButton } from '@clerk/clerk-react';
+import { dbCall, forgetGuest, getGuestToken, setTokenGetter, startGuest } from './lib/api';
 import type { Language, UserSettings, LessonState } from './types';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import Flashcards from './components/Flashcards';
@@ -37,7 +37,10 @@ function LoadingScreen() {
 export default function App() {
   const { user, isLoaded } = useUser();
   const { getToken } = useAuth();
-  const userId = user?.id;
+  // Demo mode: with nobody signed in, a guest id from this browser stands in for the user.
+  const [guest, setGuest] = useState<string | null>(() => getGuestToken());
+  const userId = user?.id ?? (isLoaded ? guest ?? undefined : undefined);
+  const isGuest = !user?.id && !!guest;
   // Registered during render so child effects can authenticate on first mount.
   setTokenGetter(() => getToken());
 
@@ -53,6 +56,24 @@ export default function App() {
   const [picking, setPicking] = useState(false);
   const [savingPicks, setSavingPicks] = useState(false);
   const [pickError, setPickError] = useState<string | null>(null);
+
+  // If a guest signs in, drop the demo id and reload so nothing from the demo carries over.
+  useEffect(() => {
+    if (user?.id && getGuestToken()) {
+      forgetGuest();
+      window.location.reload();
+    }
+  }, [user?.id]);
+
+  async function exitDemo() {
+    try {
+      await dbCall('exitDemo');
+    } catch {
+      /* wipe is best-effort; still leave the demo */
+    }
+    forgetGuest();
+    window.location.reload();
+  }
 
   useEffect(() => {
     if (!userId) return;
@@ -163,6 +184,16 @@ export default function App() {
         {/* Hash routing keeps the sign-up step in the URL, so if the phone reloads
             the page while you're in your email app, you land back on the code step. */}
         <SignIn routing="hash" />
+        <button
+          className="btn-secondary"
+          style={{ marginTop: 16 }}
+          onClick={() => setGuest(startGuest())}
+        >
+          Try the demo (no sign-in)
+        </button>
+        <p style={{ fontSize: '0.8rem', marginTop: 8 }}>
+          Demo progress is wiped when you exit the demo.
+        </p>
       </div>
     );
   }
@@ -190,7 +221,19 @@ export default function App() {
         <img src="/linguatitle.png" alt="Lingua" className="brand-logo" />
         <div className="subtitle">Learn languages, one lesson at a time.</div>
       </div>
-      <UserButton afterSignOutUrl="/" />
+      {isGuest ? (
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <span style={{ fontSize: '0.8rem' }}>Guest demo</span>
+          <SignInButton mode="modal">
+            <button className="btn-secondary">Sign in</button>
+          </SignInButton>
+          <button className="btn-secondary" onClick={exitDemo}>
+            Exit demo
+          </button>
+        </div>
+      ) : (
+        <UserButton afterSignOutUrl="/" />
+      )}
     </div>
   );
 
